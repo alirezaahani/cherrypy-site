@@ -101,10 +101,19 @@ class Site(object):
   @cherrypy.expose
   def loginprocess(self,username,password):
     if search_database("username","username",username) & search_database("password","password",password):
-      return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به مرکزمدیریت منتقل خواهید شد\");setTimeout('Redirect()', 1000);</script>","ورود")
-      cherrypy.session['islogin'] = True
+      cherrypy.session['islogin'] = "yes"
+      return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/panel\";}document.write(\"<br> و شما تا چندثانیه دیگر به مرکزمدیریت منتقل خواهید شد\");setTimeout('Redirect()', 1000);</script>","ورود")
     else:
       return theme("نام کاربری یا رمز عبور شما اشتباه است<script>function Redirect() {window.location = \"/login\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه ورود منتقل خواهید شد\");setTimeout('Redirect()', 1000);</script>","ورود")
+  
+  @cherrypy.expose
+  def panel(self):
+    try:
+      if cherrypy.session['islogin'] == "yes":
+        #Admin panel here
+        pass
+    except:
+            return theme("لطفا وارد سایت شوید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
 if __name__ == "__main__":
 
   create_database()
