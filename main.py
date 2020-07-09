@@ -63,9 +63,12 @@ def theme(text = "",title = ""):
 class Site(object):
   @cherrypy.expose
   def index(self):
+    return theme("<div>برای <a href=\"/login\">ورود</a> کلیک کنید</div><div>برای <a href=\"/signin\">ثبت نام</a> کلیک کنید<br></div>","صفحه اصلی")
+  @cherrypy.expose
+  def signin(self):
     return theme("""
     <center>
-      <form method="post" action="signin" />
+      <form method="post" action="signinprocess" />
         <input type="text" value="نام کاربری شما" name="username" />
         <input type="password" value="password" name="password" />
         <button type="submit">ثبت نام</button>
@@ -74,14 +77,34 @@ class Site(object):
     ""","صفحه اصلی")
 
   @cherrypy.expose
-  def signin(self,password,username):
+  def signinprocess(self,password,username):
     try:
       if insert_data(username,password):
-        return theme("کاربر مورد نظر ساخته شد <script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>")
+        return theme("کاربر مورد نظر ساخته شد <script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>","ثبت نام")
       else:
-        return theme("نام کاربری تکرایست و کاربر مورد نظر ساخته نشد<script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>")
+        return theme("نام کاربری تکرایست و کاربر مورد نظر ساخته نشد<script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>","ثبت نام")
     except:
-      return theme("متاسفانه به علت اشکالات در دیتابیس کاربر موردنظر ساخته نشد<script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>")
+      return theme("متاسفانه به علت اشکالات در دیتابیس کاربر موردنظر ساخته نشد<script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>","ثبت نام")
+  
+  @cherrypy.expose
+  def login(self):
+    return theme("""
+    <center>
+      <form method="post" action="loginprocess" />
+        <input type="text" value="نام کاربری شما" name="username" />
+        <input type="password" value="password" name="password" />
+        <button type="submit">ورود</button>
+      </form>
+    </center>
+    """)
+  
+  @cherrypy.expose
+  def loginprocess(self,username,password):
+    if search_database("username","username",username) & search_database("password","password",password):
+      return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به مرکزمدیریت منتقل خواهید شد\");setTimeout('Redirect()', 1000);</script>","ورود")
+      cherrypy.session['islogin'] = True
+    else:
+      return theme("نام کاربری یا رمز عبور شما اشتباه است<script>function Redirect() {window.location = \"/login\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه ورود منتقل خواهید شد\");setTimeout('Redirect()', 1000);</script>","ورود")
 if __name__ == "__main__":
 
   create_database()
