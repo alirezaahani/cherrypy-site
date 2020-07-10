@@ -1,8 +1,6 @@
 import cherrypy
 import os.path
 import sqlite3 as db
-from time import sleep
-
 def create_database():
   connection = db.connect("database.db")
   connection.close()
@@ -63,7 +61,7 @@ def theme(text = "",title = ""):
 class Site(object):
   @cherrypy.expose
   def index(self):
-    return theme("<div>برای <a href=\"/login\">ورود</a> کلیک کنید</div><div>برای <a href=\"/signin\">ثبت نام</a> کلیک کنید<br></div>","صفحه اصلی")
+    return theme("<div style=\"text-align:center;\">برای <a href=\"/login\">ورود</a> کلیک کنید</div><div style=\"text-align:center;\">برای <a href=\"/signin\">ثبت نام</a> کلیک کنید<br></div>","صفحه اصلی")
   @cherrypy.expose
   def signin(self):
     return theme("""
@@ -79,10 +77,13 @@ class Site(object):
   @cherrypy.expose
   def signinprocess(self,password,username):
     try:
-      if insert_data(username,password):
-        return theme("کاربر مورد نظر ساخته شد <script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>","ثبت نام")
+      if username == "" or password == "":
+        return theme("لطفا تمامی فرم هارا پرکنید<script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>","ثبت نام")
       else:
-        return theme("نام کاربری تکرایست و کاربر مورد نظر ساخته نشد<script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>","ثبت نام")
+        if insert_data(username,password):
+          return theme("کاربر مورد نظر ساخته شد <script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>","ثبت نام")
+        else:
+          return theme("نام کاربری تکرایست و کاربر مورد نظر ساخته نشد<script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>","ثبت نام")
     except:
       return theme("متاسفانه به علت اشکالات در دیتابیس کاربر موردنظر ساخته نشد<script>function Redirect() {window.location = \"/\";}document.write(\"<br> و شما تا چندثانیه دیگر به صفحه اصلی منتقل خواهید شد\");setTimeout('Redirect()', 3000);</script>","ثبت نام")
   
@@ -113,7 +114,7 @@ class Site(object):
         #Admin panel here
         pass
     except:
-            return theme("لطفا وارد سایت شوید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
+      return theme("لطفا وارد سایت شوید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
 if __name__ == "__main__":
 
   create_database()
@@ -124,7 +125,7 @@ if __name__ == "__main__":
 
   conf = {
     '/' : {
-      'tools.sessions.on': True,
+      'tools.sessions.on': True,  
       'tools.staticdir.root': os.path.abspath(os.getcwd())
     },
     '/static' : {
