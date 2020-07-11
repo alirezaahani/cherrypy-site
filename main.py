@@ -8,7 +8,7 @@ def create_database():
 def create_table(table_name):
   connection = db.connect("database.db")
   cur = connection.cursor()
-  cur.execute("create table {}(username text,password text)".format(table_name))
+  cur.execute("create table if not exists {}(username text,password text)".format(table_name))
   connection.close()
 
 def search_database(filters,value,search):
@@ -58,6 +58,8 @@ def theme(text = "",title = ""):
     </html>
     """.format(text,title)
 
+def page404(status, message, traceback, version):
+  return theme("صفحه مورد نظر یافت نشد","404")
 class Site(object):
   @cherrypy.expose
   def index(self):
@@ -118,14 +120,13 @@ class Site(object):
 if __name__ == "__main__":
 
   create_database()
-  try :
-    create_table("login")
-  except :
-    pass
+
+  create_table("login")
 
   conf = {
     '/' : {
-      'tools.sessions.on': True,  
+      'tools.sessions.on': True,
+      'error_page.404': page404,  
       'tools.staticdir.root': os.path.abspath(os.getcwd())
     },
     '/static' : {
