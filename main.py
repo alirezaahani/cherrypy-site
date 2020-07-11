@@ -8,7 +8,7 @@ def create_database():
 def create_table(table_name):
   connection = db.connect("database.db")
   cur = connection.cursor()
-  cur.execute("create table {}(id integer primary key,username text,password text)".format(table_name))
+  cur.execute("create table {}(username text,password text)".format(table_name))
   connection.close()
 
 def search_database(filters,value,search):
@@ -18,7 +18,7 @@ def search_database(filters,value,search):
   contect = cur.fetchall()
   connection.close()
   if not contect == []:
-    return True
+    return contect
   else:
     return False
 
@@ -101,7 +101,7 @@ class Site(object):
   
   @cherrypy.expose
   def loginprocess(self,username,password):
-    if search_database("username","username",username) & search_database("password","password",password):
+    if search_database("username","username",username) and search_database("password","password",password):
       cherrypy.session['islogin'] = "yes"
       return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/panel\";}document.write(\"<br> و شما تا چندثانیه دیگر به مرکزمدیریت منتقل خواهید شد\");setTimeout('Redirect()', 1000);</script>","ورود")
     else:
