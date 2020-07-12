@@ -25,6 +25,8 @@ def search_database(filters,value,search):
 def insert_data(username,password):
   if search_database("username","username",hash(username)):
     return False
+  elif len(password) <= 6:
+    return False
   else:
     connection = db.connect("database.db")
     cur = connection.cursor()
@@ -68,13 +70,15 @@ class Site(object):
   def signin(self):
     return theme("""
     <center>
+      <p>پسورد باید حداقل ۶ حرف باشد</p>
+      <p>جهت جلوگیری از مشکلات در ورود لطفا از حروف انگلیسی برای نام کاربری خود استفاده کنید</p>
       <form method="post" action="signinprocess" />
-        <input type="text" value="نام کاربری شما" name="username" />
-        <input type="password" value="password" name="password" />
+        نام کاربری:<input type="text" value="" name="username" /><br>
+        رمز ورود:<input type="password" value="" name="password" /><br>
         <button type="submit">ثبت نام</button>
       </form>
     </center>
-    ""","صفحه اصلی")
+    ""","ثبت نام")
 
   @cherrypy.expose
   def signinprocess(self,password,username):
@@ -85,7 +89,7 @@ class Site(object):
         if insert_data(username,password):
           return theme("کاربر مورد نظر ساخته شد <script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
         else:
-          return theme("نام کاربری تکرایست و کاربر مورد نظر ساخته نشد<script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
+          return theme("نام کاربری تکراریست یا رمز عبور شما کوتاه است<script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
     except:
       return theme("متاسفانه به علت اشکالات در دیتابیس کاربر موردنظر ساخته نشد<script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
   
@@ -93,13 +97,14 @@ class Site(object):
   def login(self):
     return theme("""
     <center>
+      <p>جهت ورود لطفا اطالاعات زیر را کامل کرده و بر روی دکمه ورود کلیک کنید</p>
       <form method="post" action="loginprocess" />
-        <input type="text" value="نام کاربری شما" name="username" />
-        <input type="password" value="password" name="password" />
+        نام کاربری:<input type="text" value="" name="username" /><br>
+        رمز ورود:<input type="password" value="" name="password" /><br>
         <button type="submit">ورود</button>
       </form>
     </center>
-    """)
+    ""","ورود")
   
   @cherrypy.expose
   def loginprocess(self,username,password):
