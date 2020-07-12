@@ -8,7 +8,7 @@ def create_database():
 def create_table(table_name):
   connection = db.connect("database.db")
   cur = connection.cursor()
-  cur.execute("create table if not exists {}(username text,password text)".format(table_name))
+  cur.execute("create table if not exists {}(id integer primary key autoincrement,username text,password text)".format(table_name))
   connection.close()
 
 def search_database(filters,value,search):
@@ -23,12 +23,12 @@ def search_database(filters,value,search):
     return False
 
 def insert_data(username,password):
-  if search_database("username","username",username):
+  if search_database("username","username",hash(username)):
     return False
   else:
     connection = db.connect("database.db")
     cur = connection.cursor()
-    cur.execute("insert into login(username,password) values('{0}','{1}')".format(username,password))
+    cur.execute("insert into login(username,password) values('{0}','{1}')".format(username,hash(password)))
     connection.commit()
     connection.close()
     return True
@@ -103,7 +103,7 @@ class Site(object):
   
   @cherrypy.expose
   def loginprocess(self,username,password):
-    if search_database("username","username",username) and search_database("password","password",password):
+    if search_database("username","username",username) and search_database("password","password",hash(password)):
       cherrypy.session['islogin'] = "yes"
       return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
     else:
