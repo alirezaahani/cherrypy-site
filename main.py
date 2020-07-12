@@ -23,14 +23,14 @@ def search_database(filters,value,search):
     return False
 
 def insert_data(username,password):
-  if search_database("username","username",hash(username)):
+  if search_database("username","username",username):
     return False
   elif len(password) <= 6:
     return False
   else:
     connection = db.connect("database.db")
     cur = connection.cursor()
-    cur.execute("insert into login(username,password) values('{0}','{1}')".format(username,hash(password)))
+    cur.execute("insert into login(username,password) values('{0}','{1}')".format(username,hash(str(password))))
     connection.commit()
     connection.close()
     return True
@@ -108,16 +108,15 @@ class Site(object):
   
   @cherrypy.expose
   def loginprocess(self,username,password):
-    if search_database("username","username",username) and search_database("password","password",hash(password)):
-      cherrypy.session['islogin'] = "yes"
+    if search_database("username","username",username) and search_database("password","password",hash(str(password))):
+      cherrypy.session['islogin'] = True
       return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
     else:
       return theme("نام کاربری یا رمز عبور شما اشتباه است<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
-  
   @cherrypy.expose
   def panel(self):
     try:
-      if cherrypy.session['islogin'] == "yes":
+      if cherrypy.session['islogin'] == True:
         #Admin panel here
         pass
     except:
