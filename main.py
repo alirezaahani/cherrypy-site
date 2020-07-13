@@ -1,6 +1,12 @@
 import cherrypy
 import os.path
 import sqlite3 as db
+import hashlib
+def hasher(password):
+  password = str(password)
+  h = hashlib.md5(password.encode())
+  return h.hexdigest()
+
 def create_database():
   connection = db.connect("database.db")
   connection.close()
@@ -30,7 +36,7 @@ def insert_data(username,password):
   else:
     connection = db.connect("database.db")
     cur = connection.cursor()
-    cur.execute("insert into login(username,password) values('{0}','{1}')".format(username,hash(str(password))))
+    cur.execute("insert into login(username,password) values('{0}','{1}')".format(username,hasher(password)))
     connection.commit()
     connection.close()
     return True
@@ -108,7 +114,7 @@ class Site(object):
   
   @cherrypy.expose
   def loginprocess(self,username,password):
-    if search_database("username","username",username) and search_database("password","password",hash(str(password))):
+    if search_database("username","username",username) and search_database("password","password",hasher(password)):
       cherrypy.session['islogin'] = True
       return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
     else:
@@ -117,10 +123,17 @@ class Site(object):
   def panel(self):
     try:
       if cherrypy.session['islogin'] == True:
-        #Admin panel here
-        pass
+        output = """
+        <center><a href="/logout">خروج</a></center>
+        """
+        return theme(output,"مرکز مدیریت")
     except:
       return theme("لطفا وارد سایت شوید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
+  @cherrypy.expose
+  def logout(self):
+    if cherrypy.session['islogin']:
+      cherrypy.session['islogin'] == False
+      raise cherrypy.HTTPRedirect("/")
 if __name__ == "__main__":
 
   create_database()
@@ -131,12 +144,11 @@ if __name__ == "__main__":
     '/' : {
       'tools.sessions.on': True,
       'error_page.404': page404,  
-      'tools.staticdir.root': os.path.abspath(os.getcwd())
+      'tools.staticdir.root': os.path.abspath(os.getcwd()),
     },
     '/static' : {
       'tools.staticdir.on' : True,
       'tools.staticdir.dir' : './public'
     }
   }
-
   cherrypy.quickstart(Site(),'/',conf)
