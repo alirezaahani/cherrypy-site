@@ -71,22 +71,25 @@ def theme(text = "",title = ""):
       <body>
         <div id="warp">
           {0}
-        </div>  
+        </div>
       </body>
     </html>
     """.format(text,title)
 
 def show_posts():
-  post = result = total = post_content = ""
+  post = result_post = result_name = total_post = total_name = post_content = post_user = name = ""
   connection = db.connect("database.db")
   cur = connection.cursor()
   cur.execute("select post from posts")
   post = cur.fetchall()
-  for result in post:
-    for total in result:
+  cur.execute("select username from posts")
+  name = cur.fetchall()
+  for result_post,result_name in zip(post,name):
+    for total_post,total_name in zip(result_post,result_name):
       post_content += "<hr>"
-      post_content += str(total)
-      post_content += "<hr>"
+      post_content += str(total_name)
+      post_content += ": "
+      post_content += str(total_post)
   connection.close()
   return post_content
 
@@ -127,7 +130,7 @@ class Site(object):
           return theme("نام کاربری تکراریست یا رمز عبور شما کوتاه است<script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
     except:
       return theme("متاسفانه به علت اشکالات در دیتابیس کاربر موردنظر ساخته نشد<script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
-  
+
   @cherrypy.expose
   def login(self):
     return theme("""
@@ -140,7 +143,7 @@ class Site(object):
       </form>
     </center>
     ""","ورود")
-  
+
   @cherrypy.expose
   def loginprocess(self,username,password):
     if search_database("username","username",username) and search_database("password","password",hasher(password)):
@@ -170,7 +173,7 @@ class Site(object):
     if cherrypy.session['islogin']:
       cherrypy.session['islogin'] == False
       raise cherrypy.HTTPRedirect("/")
-  
+
   @cherrypy.expose
   def post_insert(self,contect,username):
     try:
@@ -192,7 +195,7 @@ if __name__ == "__main__":
   conf = {
     '/' : {
       'tools.sessions.on': True,
-      'error_page.404': page404,  
+      'error_page.404': page404,
       'tools.staticdir.root': os.path.abspath(os.getcwd()),
     },
     '/static' : {
