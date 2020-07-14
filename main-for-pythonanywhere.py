@@ -22,6 +22,12 @@ def create_table(table_name):
   cur.execute("create table if not exists {}(id integer primary key autoincrement,username text,password text)".format(table_name))
   connection.close()
 
+def create_table_posts(table_name):
+  connection = db.connect("database.db")
+  cur = connection.cursor()
+  cur.execute("create table if not exists {}(id integer primary key autoincrement,username text,post text)".format(table_name))
+  connection.close()
+
 def search_database(filters,value,search):
   connection = db.connect("database.db")
   cur = connection.cursor()
@@ -46,13 +52,16 @@ def insert_data(username,password):
     connection.close()
     return True
 
-def show_data():
-  connection = db.connect("database.db")
-  cur = connection.cursor()
-  cur.execute("select * from login")
-  contect = cur.fetchall()
-  connection.close()
-  return contect
+def insert_post(contect,username):
+  if len(contect) <= 0:
+    return False
+  else:
+    connection = db.connect("database.db")
+    cur = connection.cursor()
+    cur.execute("insert into posts(username,post) values('{0}','{1}')".format(username,contect))
+    connection.commit()
+    connection.close()
+    return True
 
 def theme(text = "",title = ""):
   return """
@@ -71,18 +80,31 @@ def theme(text = "",title = ""):
     </html>
     """.format(text,title)
 
+def show_posts():
+  post = result = total = post_content = ""
+  connection = db.connect("database.db")
+  cur = connection.cursor()
+  cur.execute("select post from posts")
+  post = cur.fetchall()
+  for result in post:
+    for total in result:
+      post_content += "<hr>"
+      post_content += str(total)
+      post_content += "<hr>"
+  connection.close()
+  return post_content
+
 def page404(status, message, traceback, version):
   return theme("صفحه مورد نظر یافت نشد","404")
-
-cherrypy.config.update({'environment': 'embedded'})
-if cherrypy.__version__.startswith('3.0') and cherrypy.engine.state == 0:
-    cherrypy.engine.start(blocking=False)
-    atexit.register(cherrypy.engine.stop)
 
 class Root(object):
   @cherrypy.expose
   def index(self):
-    return theme("<div style=\"text-align:center;\">برای <a href=\"/login\">ورود</a> کلیک کنید</div><div style=\"text-align:center;\">برای <a href=\"/signin\">ثبت نام</a> کلیک کنید<br></div>","صفحه اصلی")
+    html = theme(
+    """<div style="text-align:center;">برای <a href="/login">ورود</a> کلیک کنید</div><div style="text-align:center;">برای <a href="/signin">ثبت نام</a> کلیک کنید<br></div>{}""".format(show_posts())
+    ,"صفحه اصلی")
+    return html
+
   @cherrypy.expose
   def signin(self):
     return theme("""
@@ -130,25 +152,45 @@ class Root(object):
       return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
     else:
       return theme("نام کاربری یا رمز عبور شما اشتباه است<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
+
   @cherrypy.expose
   def panel(self):
     try:
       if cherrypy.session['islogin'] == True:
         output = """
         <center><a href="/logout">خروج</a></center>
+        <form method="post" action="/post_insert">
+          اسم نویسنده :<input type="text" name="username"><br>
+          <textarea name="contect"></textarea><br>
+          <button type="submit">ثبت</button>
+        </form>
         """
         return theme(output,"مرکز مدیریت")
     except:
       return theme("لطفا وارد سایت شوید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
+
   @cherrypy.expose
   def logout(self):
     if cherrypy.session['islogin']:
       cherrypy.session['islogin'] == False
       raise cherrypy.HTTPRedirect("/")
 
+  @cherrypy.expose
+  def post_insert(self,contect,username):
+    try:
+      if cherrypy.session['islogin']:
+        insert_post(contect,username)
+        raise cherrypy.HTTPRedirect("/panel")
+      else:
+        raise cherrypy.HTTPRedirect("/")
+    except:
+      raise cherrypy.HTTPRedirect("/")
+
 create_database()
 
 create_table("login")
+
+create_table_posts("posts")
 
 conf = {
     '/' : {
