@@ -30,8 +30,8 @@ Be careful because main-pythonanywhere.py dosen't update like main code.
 - [x] Connect site to sqlite database
 - [x] Add loginin and signin
 - [x] Use hash for saving password
-- [ ] Add user panel
-- [ ] Add posting and writing in site
-- [ ] Show posts and author of post in main page
+- [x] Add user panel
+- [x] Add posting and writing in site
+- [x] Show posts and author of post in main page
 - [ ] Work on security
-- [ ] Find a host for running site
+- [x] Find a host for running site
