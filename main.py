@@ -48,6 +48,16 @@ def insert_data(username,password):
     connection.close()
     return True
 
+def insert_post(contect,username):
+  if len(contect) <= 0:
+    return False
+  else:
+    connection = db.connect("database.db")
+    cur = connection.cursor()
+    cur.execute("insert into posts(username,post) values('{0}','{1}')".format(username,contect))
+    connection.commit()
+    connection.close()
+    return True
 
 def theme(text = "",title = ""):
   return """
@@ -74,18 +84,20 @@ def show_posts():
   post = cur.fetchall()
   for result in post:
     for total in result:
+      post_content += "<hr>"
       post_content += str(total)
-      post_content += "<br>"
+      post_content += "<hr>"
+  connection.close()
   return post_content
 
 def page404(status, message, traceback, version):
   return theme("صفحه مورد نظر یافت نشد","404")
+
 class Site(object):
   @cherrypy.expose
   def index(self):
-
     html = theme(
-    """<div style="text-align:center;">برای <a href="/login">ورود</a> کلیک کنید</div><div style="text-align:center;">برای <a href="/signin">ثبت نام</a> کلیک کنید<br></div><hr>{}""".format(show_posts())
+    """<div style="text-align:center;">برای <a href="/login">ورود</a> کلیک کنید</div><div style="text-align:center;">برای <a href="/signin">ثبت نام</a> کلیک کنید<br></div>{}""".format(show_posts())
     ,"صفحه اصلی")
     return html
 
@@ -143,6 +155,11 @@ class Site(object):
       if cherrypy.session['islogin'] == True:
         output = """
         <center><a href="/logout">خروج</a></center>
+        <form method="post" action="/post_insert">
+          اسم نویسنده :<input type="text" name="username"><br>
+          <textarea name="contect"></textarea><br>
+          <button type="submit">ثبت</button>
+        </form>
         """
         return theme(output,"مرکز مدیریت")
     except:
@@ -153,7 +170,17 @@ class Site(object):
     if cherrypy.session['islogin']:
       cherrypy.session['islogin'] == False
       raise cherrypy.HTTPRedirect("/")
-
+  
+  @cherrypy.expose
+  def post_insert(self,contect,username):
+    try:
+      if cherrypy.session['islogin']:
+        insert_post(contect,username)
+        raise cherrypy.HTTPRedirect("/panel")
+      else:
+        raise cherrypy.HTTPRedirect("/")
+    except:
+      raise cherrypy.HTTPRedirect("/")
 if __name__ == "__main__":
 
   create_database()
