@@ -2,6 +2,7 @@ import cherrypy
 import os.path
 import sqlite3 as db
 import hashlib
+
 def hasher(password):
   password = str(password)
   h = hashlib.md5(password.encode())
@@ -15,6 +16,12 @@ def create_table(table_name):
   connection = db.connect("database.db")
   cur = connection.cursor()
   cur.execute("create table if not exists {}(id integer primary key autoincrement,username text,password text)".format(table_name))
+  connection.close()
+
+def create_table_posts(table_name):
+  connection = db.connect("database.db")
+  cur = connection.cursor()
+  cur.execute("create table if not exists {}(id integer primary key autoincrement,username text,post text)".format(table_name))
   connection.close()
 
 def search_database(filters,value,search):
@@ -41,13 +48,6 @@ def insert_data(username,password):
     connection.close()
     return True
 
-def show_data():
-  connection = db.connect("database.db")
-  cur = connection.cursor()
-  cur.execute("select * from login")
-  contect = cur.fetchall()
-  connection.close()
-  return contect
 
 def theme(text = "",title = ""):
   return """
@@ -66,12 +66,29 @@ def theme(text = "",title = ""):
     </html>
     """.format(text,title)
 
+def show_posts():
+  post = result = total = post_content = ""
+  connection = db.connect("database.db")
+  cur = connection.cursor()
+  cur.execute("select post from posts")
+  post = cur.fetchall()
+  for result in post:
+    for total in result:
+      post_content += str(total)
+      post_content += "<br>"
+  return post_content
+
 def page404(status, message, traceback, version):
   return theme("صفحه مورد نظر یافت نشد","404")
 class Site(object):
   @cherrypy.expose
   def index(self):
-    return theme("<div style=\"text-align:center;\">برای <a href=\"/login\">ورود</a> کلیک کنید</div><div style=\"text-align:center;\">برای <a href=\"/signin\">ثبت نام</a> کلیک کنید<br></div>","صفحه اصلی")
+
+    html = theme(
+    """<div style="text-align:center;">برای <a href="/login">ورود</a> کلیک کنید</div><div style="text-align:center;">برای <a href="/signin">ثبت نام</a> کلیک کنید<br></div><hr>{}""".format(show_posts())
+    ,"صفحه اصلی")
+    return html
+
   @cherrypy.expose
   def signin(self):
     return theme("""
@@ -119,6 +136,7 @@ class Site(object):
       return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
     else:
       return theme("نام کاربری یا رمز عبور شما اشتباه است<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
+
   @cherrypy.expose
   def panel(self):
     try:
@@ -129,16 +147,20 @@ class Site(object):
         return theme(output,"مرکز مدیریت")
     except:
       return theme("لطفا وارد سایت شوید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
+
   @cherrypy.expose
   def logout(self):
     if cherrypy.session['islogin']:
       cherrypy.session['islogin'] == False
       raise cherrypy.HTTPRedirect("/")
+
 if __name__ == "__main__":
 
   create_database()
 
   create_table("login")
+
+  create_table_posts("posts")
 
   conf = {
     '/' : {
