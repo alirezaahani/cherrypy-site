@@ -2,8 +2,9 @@ import cherrypy
 import os.path
 import sqlite3 as db
 import hashlib
+import string
+import random
 from captcha.image import ImageCaptcha
-from random import randint
 
 captcha_output = ""
 
@@ -115,7 +116,7 @@ class Site(object):
     @cherrypy.expose
     def signin(self):
         global captcha_output
-        captcha_output = str(randint(0,9999))
+        captcha_output = ''.join(random.sample(string.hexdigits, 4))
         image = ImageCaptcha()
         image.write(captcha_output,"./public/out.png")
         return theme("""
@@ -151,7 +152,7 @@ class Site(object):
     @cherrypy.expose
     def login(self):
         global captcha_output
-        captcha_output = str(randint(0,9999))
+        captcha_output = ''.join(random.sample(string.hexdigits, 4))
         image = ImageCaptcha()
         image.write(captcha_output,"./public/out.png")
         return theme("""
