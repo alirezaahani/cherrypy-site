@@ -2,6 +2,10 @@ import cherrypy
 import os.path
 import sqlite3 as db
 import hashlib
+from captcha.image import ImageCaptcha
+from random import randint
+
+captcha_output = ""
 
 def hasher(password):
     password = str(password)
@@ -96,6 +100,7 @@ def show_posts():
             count += 1
     connection.close()
     return post_content
+
 def page404(status, message, traceback, version):
     return theme("صفحه مورد نظر یافت نشد","404")
 
@@ -109,6 +114,10 @@ class Site(object):
 
     @cherrypy.expose
     def signin(self):
+        global captcha_output
+        captcha_output = str(randint(0,9999))
+        image = ImageCaptcha()
+        image.write(captcha_output,"./public/out.png")
         return theme("""
         <center>
             <p>پسورد باید حداقل ۶ حرف باشد</p>
@@ -116,21 +125,26 @@ class Site(object):
             <form method="post" action="signinprocess" />
                 نام کاربری:<input type="text" value="" name="username" /><br>
                 رمز ورود:<input type="password" value="" name="password" /><br>
-                <button type="submit">ثبت نام</button>
+                کپجا : <input type="text" name="captcha">
+                <button type="submit">ثبت نام</button><br>
+		        <img src="static/out.png">
             </form>
         </center>
         ""","ثبت نام")
 
     @cherrypy.expose
-    def signinprocess(self,password,username):
+    def signinprocess(self,password,username,captcha):
         try:
-            if username == "" or password == "":
+            if username == "" or password == "" or captcha == "":
                 return theme("لطفا تمامی فرم هارا پرکنید<script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
             else:
-                if insert_data(username,password):
-                    return theme("کاربر مورد نظر ساخته شد <script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
+                if captcha == captcha_output:
+                    if insert_data(username,password):
+                        return theme("کاربر مورد نظر ساخته شد <script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
+                    else:
+                        return theme("نام کاربری تکراریست یا رمز عبور شما کوتاه است<script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
                 else:
-                    return theme("نام کاربری تکراریست یا رمز عبور شما کوتاه است<script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
+                    return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
         except:
             return theme("متاسفانه به علت اشکالات در دیتابیس کاربر موردنظر ساخته نشد<script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
 
