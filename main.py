@@ -5,7 +5,7 @@ import hashlib
 
 def hasher(password):
     password = str(password)
-    h = hashlib.md5(password.encode())
+    h = hashlib.sha512(password.encode())
     return h.hexdigest()
 
 def create_database():
@@ -77,7 +77,7 @@ def theme(text = "",title = ""):
         """.format(text,title)
 
 def show_posts():
-    post = result_post = result_name = total_post = total_name = post_content = post_user = name = ""
+    post = result_post = result_name = total_post = total_name = post_content = name = ""
     count = 0
     connection = db.connect("database.db")
     cur = connection.cursor()
@@ -158,7 +158,7 @@ class Site(object):
     @cherrypy.expose
     def panel(self):
         try:
-            if cherrypy.session['islogin'] == True:
+            if cherrypy.session['islogin']:
                 output = """
                 <center><a href="/logout">خروج</a></center>
                 <form method="post" action="/post_insert">
@@ -174,7 +174,7 @@ class Site(object):
     @cherrypy.expose
     def logout(self):
         if cherrypy.session['islogin']:
-            cherrypy.session['islogin'] == False
+            cherrypy.session['islogin'] = False
             raise cherrypy.HTTPRedirect("/")
 
     @cherrypy.expose
@@ -187,6 +187,8 @@ class Site(object):
                 raise cherrypy.HTTPRedirect("/")
         except:
             raise cherrypy.HTTPRedirect("/")
+
+
 if __name__ == "__main__":
 
     create_database()
@@ -201,9 +203,9 @@ if __name__ == "__main__":
             'error_page.404': page404,
             'tools.staticdir.root': os.path.abspath(os.getcwd()),
         },
-        '/static' : {
-            'tools.staticdir.on' : True,
-            'tools.staticdir.dir' : './public'
+        '/static': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': './public'
         }
     }
     cherrypy.quickstart(Site(),'/',conf)
