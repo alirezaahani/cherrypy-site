@@ -125,7 +125,7 @@ class Site(object):
             <form method="post" action="signinprocess" />
                 نام کاربری:<input type="text" value="" name="username" /><br>
                 رمز ورود:<input type="password" value="" name="password" /><br>
-                کپجا : <input type="text" name="captcha">
+                کپجا : <input type="text" name="captcha"><br>
                 <button type="submit">ثبت نام</button><br>
 		        <img src="static/out.png">
             </form>
@@ -150,25 +150,33 @@ class Site(object):
 
     @cherrypy.expose
     def login(self):
+        global captcha_output
+        captcha_output = str(randint(0,9999))
+        image = ImageCaptcha()
+        image.write(captcha_output,"./public/out.png")
         return theme("""
         <center>
             <p>جهت ورود لطفا اطالاعات زیر را کامل کرده و بر روی دکمه ورود کلیک کنید</p>
             <form method="post" action="loginprocess" />
                 نام کاربری:<input type="text" value="" name="username" /><br>
                 رمز ورود:<input type="password" value="" name="password" /><br>
+                کپجا : <input type="text" name="captcha"><br>
                 <button type="submit">ورود</button>
+		        <img src="static/out.png">
             </form>
         </center>
         ""","ورود")
 
     @cherrypy.expose
-    def loginprocess(self,username,password):
-        if search_database("username","username",username) and search_database("password","password",hasher(password)):
-            cherrypy.session['islogin'] = True
-            return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
+    def loginprocess(self,username,password,captcha):
+        if captcha == captcha_output:
+            if search_database("username","username",username) and search_database("password","password",hasher(password)):
+                cherrypy.session['islogin'] = True
+                return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
+            else:
+                return theme("نام کاربری یا رمز عبور شما اشتباه است<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
         else:
-            return theme("نام کاربری یا رمز عبور شما اشتباه است<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
-
+            return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/\";}setTimeout('Redirect()', 3000);</script>","ثبت نام")
     @cherrypy.expose
     def panel(self):
         try:
