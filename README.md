@@ -7,9 +7,9 @@ A simple site with cherrypy and sqlite
 ![signin](/screenshots/signin.png)
 ![404](/screenshots/404.png)
 ## Run on localhost
-First of all,you need to install cherrypy with pip:  
+First of all,you need to install cherrypy and captcha with pip:  
 ```
-pip3 install cherrypy
+pip3 install cherrypy captcha
 ```  
 Then clone the code with git:  
 ```
@@ -18,18 +18,7 @@ git clone https://github.com/alirezaahani/cherrypy-site.git
 And finaly run the main.py:  
 ```
 python main.py
-```  
-## Run on PythonAnyWhere  
-First you need make an account on PythonAnyWhere.  
-Then in the panel , select "web" form the menu.  
-If you don't have any apps , create one with Manually config.  
-Open the file browser and create a folder named "public" and in it create another folder and name it css.  
-In css folder put "style.css" file and save.  
-Edit you wsgi file which is in /var/www  
-Put main-pythonanywhere.py in it and save.  
-Now your site should be running.  
-Demo : http://alirezaahani.pythonanywhere.com  
-Be careful because main-pythonanywhere.py dosen't update like main code.  
+```   
 ## TODO
 - [x] Start making site
 - [x] Make the css and html
