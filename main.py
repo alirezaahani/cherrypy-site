@@ -78,6 +78,7 @@ def theme(text = "",title = ""):
 
 def show_posts():
   post = result_post = result_name = total_post = total_name = post_content = post_user = name = ""
+  count = 0
   connection = db.connect("database.db")
   cur = connection.cursor()
   cur.execute("select post from posts")
@@ -86,13 +87,15 @@ def show_posts():
   name = cur.fetchall()
   for result_post,result_name in zip(post,name):
     for total_post,total_name in zip(result_post,result_name):
-      post_content += "<hr>"
+      if count == 0:
+          post_content += "<hr>"
       post_content += str(total_name)
       post_content += ": "
       post_content += str(total_post)
+      post_content += "<hr>"
+      count += 1
   connection.close()
   return post_content
-
 def page404(status, message, traceback, version):
   return theme("صفحه مورد نظر یافت نشد","404")
 
