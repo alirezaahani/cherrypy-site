@@ -28,5 +28,8 @@ python main.py
 - [x] Add user panel
 - [x] Add posting and writing in site
 - [x] Show posts and author of post in main page
-- [ ] Work on security
-- [x] Find a host for running site
+- [x] Work on security
+- [ ] Find a host for running site
+### Importent thing about this site if you want to run it on your host or server
+Disable the caching.  
+Also i don't work on this code anymore.  
