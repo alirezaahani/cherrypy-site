@@ -88,8 +88,10 @@ def show_posts():
     cur = connection.cursor()
     cur.execute("select post from posts")
     post = cur.fetchall()
+    post.reverse()
     cur.execute("select username from posts")
     name = cur.fetchall()
+    name.reverse()
     for result_post,result_name in zip(post,name):
         for total_post,total_name in zip(result_post,result_name):
             if count == 0:
@@ -205,6 +207,7 @@ class Site(object):
         try:
             if cherrypy.session['islogin']:
                 html = contect.replace("\n","<br>")
+                removed_scripts = html.replace("<script>","lol")
                 insert_post(html,username)
                 raise cherrypy.HTTPRedirect("/panel")
             else:
