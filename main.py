@@ -227,6 +227,7 @@ if __name__ == "__main__":
             'tools.sessions.on': True,
             'error_page.404': page404,
             'tools.staticdir.root': os.path.abspath(os.getcwd()),
+            'tools.sessions.secure': True,
         },
         '/static': {
             'tools.staticdir.on': True,

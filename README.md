@@ -33,3 +33,4 @@ python main.py
 ### Importent thing about this site if you want to run it on your host or server
 Disable the caching.  
 Also i don't work on this code anymore.  
+So it has bugs & issus.
