@@ -136,7 +136,7 @@ class Site(object):
 
     @cherrypy.expose
     def signinprocess(self,password,username,captcha):
-        if len(username) > 0 or len(password) or len(captcha):
+        if len(username) < 0 or len(password) < 0 or len(captcha) < 0:
             return theme("لطفا تمامی فرم هارا پرکنید<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
         else:
             if captcha.lower() == captcha_output:
@@ -148,6 +148,7 @@ class Site(object):
                     return theme("نام کاربری تکراریست<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
             else:
                 return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+    
     @cherrypy.expose
     def login(self):
         global captcha_output
@@ -169,7 +170,9 @@ class Site(object):
 
     @cherrypy.expose
     def loginprocess(self,username,password,captcha):
+        #Checking the captcha
         if captcha.lower() == captcha_output:
+            #Checking the database
             if search_database("username","username",username) and search_database("password","password",hasher(password)):
                 cherrypy.session['islogin'] = True
                 return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
@@ -177,8 +180,10 @@ class Site(object):
                 return theme("نام کاربری یا رمز عبور شما اشتباه است<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
         else:
             return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+    
     @cherrypy.expose
     def panel(self):
+        #I use try cuz of the sessions not definding, tell me if there is a better way
         try:
             if cherrypy.session['islogin']:
                 output = """
@@ -190,46 +195,79 @@ class Site(object):
                             <button type="submit">ثبت</button>
                         </form>
                     </center>"""
+                #Showing a form for inseting posts
                 return theme(output,"مرکز مدیریت")
         except:
             return theme("لطفا وارد سایت شوید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
 
     @cherrypy.expose
     def logout(self):
-        if cherrypy.session['islogin']:
-            cherrypy.session['islogin'] = False
+        #I use try cuz of the sessions not definding, tell me if there is a better way
+        try:
+            #Checking if user is logined or not
+            if cherrypy.session['islogin']:
+                #Loging the user out
+                cherrypy.session['islogin'] = False
+                #Redirect to root
+                raise cherrypy.HTTPRedirect("/")
+            else:
+                #Redirect to root
+                raise cherrypy.HTTPRedirect("/")
+        except:
+            #Redirect to root
             raise cherrypy.HTTPRedirect("/")
 
     @cherrypy.expose
     def post_insert(self,contect,username):
+        #I use try cuz of the sessions not definding, tell me if there is a better way
         try:
+            #Checking if your is logined
             if cherrypy.session['islogin']:
-                html = contect.replace("\n","<br>")
-                removed_scripts = html.replace("<script>","lol")
-                insert_post(html,removed_scripts)
+                #Just for disabling the javascript and css
+                contect = contect.replace("\n","<br>")
+                contect = contect.replace("<script>","lol")
+                contect = contect.replace("<style>","lol")
+                username = username.replace("\n","<br>")
+                username = username.replace("<script>","lol")
+                username = username.replace("<style>","lol")
+                insert_post(contect,username)
+                #Redirect to root
                 raise cherrypy.HTTPRedirect("/panel")
             else:
+                #Redirect to root
                 raise cherrypy.HTTPRedirect("/")
         except:
+            #Redirect to root
             raise cherrypy.HTTPRedirect("/")
 
-
+#Main function
 if __name__ == "__main__":
-
+    #Creating the database
     create_database()
+    #Creating a table for logins
     create_table("login")
+    #Creating a table for posts
     create_table_posts("posts")
-
+    #Config for the app
     conf = {
+        #Config for root of the site
         '/' : {
+            #Enabling the sessions
             'tools.sessions.on': True,
+            #Setting the 404 page
             'error_page.404': page404,
+            #Getting the dir for file saving a stuff
             'tools.staticdir.root': os.path.abspath(os.getcwd()),
+            #Making the sessions secure
             'tools.sessions.secure': True,
         },
+        #Config for the static folder of the site(It's for pictures and styles)
         '/static': {
+            #Enabling it
             'tools.staticdir.on': True,
+            #Setting the dir of static
             'tools.staticdir.dir': './public'
         }
     }
+    #Starting the app
     cherrypy.quickstart(Site(),'/',conf)
