@@ -7,12 +7,12 @@ import sqlite3 as db
 from captcha.image import ImageCaptcha
 
 captcha_output = ""
-
+#Making a strong hash using sha512(It's little bit slow it think)
 def hasher(password):
     password = str(password)
     h = hashlib.sha512(password.encode())
     return h.hexdigest()
-
+#These three function are really easy to understand.
 def create_database():
     connection = db.connect("database.db")
     connection.close()
@@ -30,8 +30,10 @@ def create_table_posts(table_name):
     connection.close()
 
 def search_database(filters,value,search):
+    #Making a connetion
     connection = db.connect("database.db")
     cur = connection.cursor()
+    #Searching in database
     cur.execute("select {0} from login where {1}=\"{2}\"".format(filters,value,search))
     contect = cur.fetchall()
     connection.close()
