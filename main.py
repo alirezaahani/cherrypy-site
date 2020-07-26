@@ -35,7 +35,7 @@ def search_database(filters,value,search):
     cur.execute("select {0} from login where {1}=\"{2}\"".format(filters,value,search))
     contect = cur.fetchall()
     connection.close()
-    if not contect == []:
+    if len(contect) > 0:
         return contect
     else:
         return False
@@ -44,7 +44,7 @@ def insert_data(username,password):
     if search_database("username","username",username):
         return False
     elif len(password) <= 6:
-        return False
+        return -1
     else:
         connection = db.connect("database.db")
         cur = connection.cursor()
@@ -136,20 +136,18 @@ class Site(object):
 
     @cherrypy.expose
     def signinprocess(self,password,username,captcha):
-        try:
-            if username == "" or password == "" or captcha == "":
-                return theme("لطفا تمامی فرم هارا پرکنید<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
-            else:
-                if captcha.lower() == captcha_output:
-                    if insert_data(username,password):
-                        return theme("کاربر مورد نظر ساخته شد <script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
-                    else:
-                        return theme("نام کاربری تکراریست یا رمز عبور شما کوتاه است<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+        if len(username) > 0 or len(password) or len(captcha):
+            return theme("لطفا تمامی فرم هارا پرکنید<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+        else:
+            if captcha.lower() == captcha_output:
+                if insert_data(username,password):
+                    return theme("کاربر مورد نظر ساخته شد <script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+                elif insert_data(username,password) == -1:
+                    return theme("رمز عبور کوتاه است !<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
                 else:
-                    return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
-        except:
-                return theme("متاسفانه به علت اشکالات در دیتابیس کاربر موردنظر ساخته نشد<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
-
+                    return theme("نام کاربری تکراریست<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+            else:
+                return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
     @cherrypy.expose
     def login(self):
         global captcha_output
@@ -208,7 +206,7 @@ class Site(object):
             if cherrypy.session['islogin']:
                 html = contect.replace("\n","<br>")
                 removed_scripts = html.replace("<script>","lol")
-                insert_post(html,username)
+                insert_post(html,removed_scripts)
                 raise cherrypy.HTTPRedirect("/panel")
             else:
                 raise cherrypy.HTTPRedirect("/")
