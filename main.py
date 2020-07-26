@@ -41,29 +41,41 @@ def search_database(filters,value,search):
         return False
 
 def insert_data(username,password):
+    #Searching for dup username
     if search_database("username","username",username):
         return False
+    #Checking for strong password
     elif len(password) <= 6:
         return -1
     else:
+        #Making a connetion
         connection = db.connect("database.db")
+        #Getting a cursor
         cur = connection.cursor()
+        #Inserting the data
         cur.execute("insert into login(username,password) values('{0}','{1}')".format(username,hasher(password)))
+        #Commitng the data
         connection.commit()
         connection.close()
         return True
 
 def insert_post(contect,username):
+    #Checking for empty input
     if len(contect) <= 0:
         return False
     else:
+        #Making a connection
         connection = db.connect("database.db")
+        #Getting a cursor
         cur = connection.cursor()
+        #Inserting values(name and post)
         cur.execute("insert into posts(username,post) values('{0}','{1}')".format(username,contect))
+        #Commiting the inserted data
         connection.commit()
         connection.close()
         return True
 
+#This fucntion is for theme
 def theme(text,title):
     return """
     <html>
@@ -82,16 +94,22 @@ def theme(text,title):
     """.format(text,title)
 
 def show_posts():
+    #A lot of value
     post = result_post = result_name = total_post = total_name = post_content = name = ""
     count = 0
+    #Connecting to database
     connection = db.connect("database.db")
+    #Getting a cursor
     cur = connection.cursor()
+    #Getting all the posts
     cur.execute("select post from posts")
     post = cur.fetchall()
     post.reverse()
+    #Getting all the username
     cur.execute("select username from posts")
     name = cur.fetchall()
     name.reverse()
+    #This loop is for showing all posts and username in a good looking way
     for result_post,result_name in zip(post,name):
         for total_post,total_name in zip(result_post,result_name):
             if count == 0:
@@ -101,13 +119,17 @@ def show_posts():
             post_content += str(total_post)
             post_content += "<hr>"
             count += 1
+    #Closing the db
     connection.close()
+    #Returning the final result
     return post_content
 
+#404 page
 def page404(status, message, traceback, version):
     return theme("صفحه مورد نظر یافت نشد","404")
 
 class Site(object):
+
     @cherrypy.expose
     def index(self):
         html = theme(
@@ -117,6 +139,7 @@ class Site(object):
 
     @cherrypy.expose
     def signin(self):
+        #Making captcha and putting it in public/out.png
         global captcha_output
         captcha_output = ''.join(random.sample(string.hexdigits, 4)).lower()
         image = ImageCaptcha()
@@ -136,10 +159,13 @@ class Site(object):
 
     @cherrypy.expose
     def signinprocess(self,password,username,captcha):
+        #Checking for empty input
         if len(username) < 0 or len(password) < 0 or len(captcha) < 0:
             return theme("لطفا تمامی فرم هارا پرکنید<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
         else:
+            #Checking the captcha
             if captcha.lower() == captcha_output:
+                #Inserting the user
                 if insert_data(username,password):
                     return theme("کاربر مورد نظر ساخته شد <script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
                 elif insert_data(username,password) == -1:
@@ -151,6 +177,7 @@ class Site(object):
     
     @cherrypy.expose
     def login(self):
+        #Making a captcha and saving it in public/out.png
         global captcha_output
         captcha_output = ''.join(random.sample(string.hexdigits, 4)).lower()
         image = ImageCaptcha()
