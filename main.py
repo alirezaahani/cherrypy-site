@@ -2,6 +2,7 @@ import cherrypy
 import os.path
 import hashlib
 import string
+import time
 import random
 from pymongo import MongoClient
 from captcha.image import ImageCaptcha
@@ -58,13 +59,15 @@ def InsertUser(username,password):
         return False
 
 def InsetPost(content,username):
-    data = {'content':content,'username':username}
+    data = {'content':content,'username':username,'date':time.ctime()}
     posts.insert_one(data)    
 
 def ShowAllPosts():
     text = ""
-    for post in posts.find():
-        text += "<hr>" + post['username'] + ":" + post['content'] + "<hr>"
+    posts_in_list = list(posts.find())
+    posts_in_list.reverse()
+    for post in posts_in_list:
+        text += "توسط " + post['username'] + "در : " + post['date'] +":" + post['content'] + "<hr>"
     return text
 
 class Site(object):
