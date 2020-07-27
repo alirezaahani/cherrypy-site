@@ -67,7 +67,7 @@ def ShowAllPosts():
     posts_in_list = list(posts.find())
     posts_in_list.reverse()
     for post in posts_in_list:
-        text += "توسط " + post['username'] + "در : " + post['date'] +":" + post['content'] + "<hr>"
+        text += "توسط " + post['username'] + " در "  + post['date'] +": <br>" + post['content'] + "<hr>"
     return text
 
 class Site(object):
@@ -142,6 +142,8 @@ class Site(object):
             if SearchUser(username,hasher(password)):
                 cherrypy.session['islogin'] = True
                 return theme("ورود با موفقیت انجام شد ، در حال انتقال به پنل <script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
+            else:
+                return theme("نام کاربری یا رمز عبور اشتباه است <script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
         else:
             return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
     
