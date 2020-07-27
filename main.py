@@ -209,7 +209,7 @@ if __name__ == "__main__":
     #Connecting to the mongod server
     client = MongoClient()
     #Making a database
-    db = client['site']
+    db = client['cherrypy']
     #Making collections
     users = db['users']
     posts = db['posts']
