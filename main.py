@@ -3,7 +3,7 @@ import os.path
 import hashlib
 import string
 import random
-import sqlite3 as db
+from pymongo import MongoClient
 from captcha.image import ImageCaptcha
 
 captcha_output = ""
@@ -12,70 +12,6 @@ def hasher(password):
     password = str(password)
     h = hashlib.sha512(password.encode())
     return h.hexdigest()
-#These three function are really easy to understand.
-def create_database():
-    connection = db.connect("database.db")
-    connection.close()
-
-def create_table(table_name):
-    connection = db.connect("database.db")
-    cur = connection.cursor()
-    cur.execute("create table if not exists {}(id integer primary key autoincrement,username text,password text)".format(table_name))
-    connection.close()
-
-def create_table_posts(table_name):
-    connection = db.connect("database.db")
-    cur = connection.cursor()
-    cur.execute("create table if not exists {}(id integer primary key autoincrement,username text,post text)".format(table_name))
-    connection.close()
-
-def search_database(filters,value,search):
-    #Making a connetion
-    connection = db.connect("database.db")
-    cur = connection.cursor()
-    #Searching in database
-    cur.execute("select {0} from login where {1}=\"{2}\"".format(filters,value,search))
-    contect = cur.fetchall()
-    connection.close()
-    if len(contect) > 0:
-        return contect
-    else:
-        return False
-
-def insert_data(username,password):
-    #Searching for dup username
-    if search_database("username","username",username):
-        return False
-    #Checking for strong password
-    elif len(password) <= 6:
-        return -1
-    else:
-        #Making a connetion
-        connection = db.connect("database.db")
-        #Getting a cursor
-        cur = connection.cursor()
-        #Inserting the data
-        cur.execute("insert into login(username,password) values('{0}','{1}')".format(username,hasher(password)))
-        #Commitng the data
-        connection.commit()
-        connection.close()
-        return True
-
-def insert_post(contect,username):
-    #Checking for empty input
-    if len(contect) <= 0:
-        return False
-    else:
-        #Making a connection
-        connection = db.connect("database.db")
-        #Getting a cursor
-        cur = connection.cursor()
-        #Inserting values(name and post)
-        cur.execute("insert into posts(username,post) values('{0}','{1}')".format(username,contect))
-        #Commiting the inserted data
-        connection.commit()
-        connection.close()
-        return True
 
 #This fucntion is for theme
 def theme(text,title):
@@ -95,47 +31,47 @@ def theme(text,title):
     </html>
     """.format(text,title)
 
-def show_posts():
-    #A lot of value
-    post = result_post = result_name = total_post = total_name = post_content = name = ""
-    count = 0
-    #Connecting to database
-    connection = db.connect("database.db")
-    #Getting a cursor
-    cur = connection.cursor()
-    #Getting all the posts
-    cur.execute("select post from posts")
-    post = cur.fetchall()
-    post.reverse()
-    #Getting all the username
-    cur.execute("select username from posts")
-    name = cur.fetchall()
-    name.reverse()
-    #This loop is for showing all posts and username in a good looking way
-    for result_post,result_name in zip(post,name):
-        for total_post,total_name in zip(result_post,result_name):
-            if count == 0:
-                post_content += "<hr>"
-            post_content += str(total_name)
-            post_content += ": "
-            post_content += str(total_post)
-            post_content += "<hr>"
-            count += 1
-    #Closing the db
-    connection.close()
-    #Returning the final result
-    return post_content
-
 #404 page
 def page404(status, message, traceback, version):
     return theme("صفحه مورد نظر یافت نشد","404")
 
-class Site(object):
+def SearchDupUser(username):
+    output = users.find_one({'username':username})
+    if output is None:
+        return True
+    else:
+        return False
 
+def SearchUser(username,password):
+    output = users.find_one({'username':username,'password':password})
+    if output is None:
+        return False
+    else:
+        return True
+
+def InsertUser(username,password):
+    data = {'username':username,'password':password}
+    if SearchDupUser(username):
+        users.insert_one(data)
+        return True
+    else:
+        return False
+
+def InsetPost(content,username):
+    data = {'content':content,'username':username}
+    posts.insert_one(data)    
+
+def ShowAllPosts():
+    text = ""
+    for post in posts.find():
+        text += "<hr>" + post['username'] + ":" + post['content'] + "<hr>"
+    return text
+
+class Site(object):
     @cherrypy.expose
     def index(self):
         html = theme(
-        """<div style="text-align:center;">برای <a href="/login">ورود</a> کلیک کنید</div><div style="text-align:center;">برای <a href="/signin">ثبت نام</a> کلیک کنید<br></div>{}""".format(show_posts())
+        """<div style="text-align:center;">برای <a href="/login">ورود</a> کلیک کنید</div><div style="text-align:center;">برای <a href="/signin">ثبت نام</a> کلیک کنید<br></div>{}""".format(ShowAllPosts())
         ,"صفحه اصلی")
         return html
 
@@ -168,12 +104,10 @@ class Site(object):
             #Checking the captcha
             if captcha.lower() == captcha_output:
                 #Inserting the user
-                if insert_data(username,password):
-                    return theme("کاربر مورد نظر ساخته شد <script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
-                elif insert_data(username,password) == -1:
-                    return theme("رمز عبور کوتاه است !<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+                if InsertUser(username,hasher(password)):
+                    return theme("ثبت نام با موفقیت انجام شد ! <script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
                 else:
-                    return theme("نام کاربری تکراریست<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+                    return theme("نام کاربری تکراریست <script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
             else:
                 return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
     
@@ -202,13 +136,11 @@ class Site(object):
         #Checking the captcha
         if captcha.lower() == captcha_output:
             #Checking the database
-            if search_database("username","username",username) and search_database("password","password",hasher(password)):
+            if SearchUser(username,hasher(password)):
                 cherrypy.session['islogin'] = True
-                return theme("شما با موفقیت وارد سایت شدید<script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
-            else:
-                return theme("نام کاربری یا رمز عبور شما اشتباه است<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
+                return theme("ورود با موفقیت انجام شد ، در حال انتقال به پنل <script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
         else:
-            return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+            return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
     
     @cherrypy.expose
     def panel(self):
@@ -259,8 +191,8 @@ class Site(object):
                 username = username.replace("\n","<br>")
                 username = username.replace("<script>","lol")
                 username = username.replace("<style>","lol")
-                insert_post(contect,username)
                 #Redirect to root
+                InsetPost(contect,username)
                 raise cherrypy.HTTPRedirect("/panel")
             else:
                 #Redirect to root
@@ -271,12 +203,13 @@ class Site(object):
 
 #Main function
 if __name__ == "__main__":
-    #Creating the database
-    create_database()
-    #Creating a table for logins
-    create_table("login")
-    #Creating a table for posts
-    create_table_posts("posts")
+    #Connecting to the mongod server
+    client = MongoClient()
+    #Making a database
+    db = client['site']
+    #Making collections
+    users = db['users']
+    posts = db['posts']
     #Config for the app
     conf = {
         #Config for root of the site
