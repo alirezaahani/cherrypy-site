@@ -9,13 +9,17 @@ from captcha.image import ImageCaptcha
 
 captcha_output = ""
 #Making a strong hash using sha512(It's little bit slow it think)
-def hasher(password):
+def Hasher(password):
     password = str(password)
     h = hashlib.sha512(password.encode())
     return h.hexdigest()
 
+def Redirect(url):
+    output = "<script>function Redirect() {window.location = \"" + url + "\";}setTimeout('Redirect()', 1000);</script>"
+    return output
+
 #This fucntion is for theme
-def theme(text,title):
+def Theme(text,title):
     return """
     <html>
         <head>
@@ -33,8 +37,17 @@ def theme(text,title):
     """.format(text,title)
 
 #404 page
-def page404(status, message, traceback, version):
-    return theme("صفحه مورد نظر یافت نشد","404")
+def Page404(status, message, traceback, version):
+    return Theme("صفحه مورد نظر یافت نشد","404")
+
+def ShowPostsByAuthor(author):
+    output = ""
+    posts_in_list = list(posts.find({'username':author}))
+    posts_in_list.reverse()
+    output += str(len(posts_in_list)) + " پست توسط " + author + " منتشر شده است " + "<hr>"
+    for post in posts_in_list:
+        output += "توسط " + post['username'] + " در "  + post['date'] +": <br>" + post['content'] + "<hr>"
+    return output
 
 def SearchDupUser(username):
     output = users.find_one({'username':username})
@@ -63,18 +76,27 @@ def InsetPost(content,username):
     posts.insert_one(data)    
 
 def ShowAllPosts():
-    text = ""
+    output = ""
     posts_in_list = list(posts.find())
     posts_in_list.reverse()
     for post in posts_in_list:
-        text += "توسط " + post['username'] + " در "  + post['date'] +": <br>" + post['content'] + "<hr>"
-    return text
+        output += "توسط " + post['username'] + " در "  + post['date'] +": <br>" + post['content'] + "<hr>"
+    return output
 
 class Site(object):
     @cherrypy.expose
     def index(self):
-        html = theme(
-        """<div style="text-align:center;">برای <a href="/login">ورود</a> کلیک کنید</div><div style="text-align:center;">برای <a href="/signin">ثبت نام</a> کلیک کنید<br></div>{}""".format(ShowAllPosts())
+        html = Theme(
+        """<center>برای <a href="/login">ورود</a> کلیک کنید<br>برای <a href="/signin">ثبت نام</a> کلیک کنید<br></center>
+        <br>
+        <center>
+            <form method="get" action="searchprocess">
+                نام نویسنده : <input name="author" />
+                <button>جست و جو</button>
+            </form>
+        </center>
+        {}
+        """.format(ShowAllPosts())
         ,"صفحه اصلی")
         return html
 
@@ -85,7 +107,7 @@ class Site(object):
         captcha_output = ''.join(random.sample(string.hexdigits, 4)).lower()
         image = ImageCaptcha()
         image.write(captcha_output,"./public/out.png")
-        return theme("""
+        return Theme("""
         <center>
             <p>پسورد باید حداقل ۶ حرف باشد</p>
             <p>جهت جلوگیری از مشکلات در ورود لطفا از حروف انگلیسی برای نام کاربری خود استفاده کنید</p>
@@ -102,17 +124,17 @@ class Site(object):
     def signinprocess(self,password,username,captcha):
         #Checking for empty input
         if len(username) < 0 or len(password) < 0 or len(captcha) < 0:
-            return theme("لطفا تمامی فرم هارا پرکنید<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+            return Theme("لطفا تمامی فرم هارا پرکنید{}".format(Redirect("/signin")),"ورود")
         else:
             #Checking the captcha
             if captcha.lower() == captcha_output:
                 #Inserting the user
-                if InsertUser(username,hasher(password)):
-                    return theme("ثبت نام با موفقیت انجام شد ! <script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+                if InsertUser(username,Hasher(password)):
+                    return Theme("ثبت نام با موفقیت انجام شد !{}".format(Redirect("/login")),"ورود")
                 else:
-                    return theme("نام کاربری تکراریست <script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+                    return Theme("نام کاربری تکراریست.{}".format(Redirect("/signin")),"ورود")
             else:
-                return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/signin\";}setTimeout('Redirect()', 1000);</script>","ثبت نام")
+                return Theme("لطفا کپچا را درست وارد کنید.{}".format(Redirect("/signin")),"ورود")
     
     @cherrypy.expose
     def login(self):
@@ -121,7 +143,7 @@ class Site(object):
         captcha_output = ''.join(random.sample(string.hexdigits, 4)).lower()
         image = ImageCaptcha()
         image.write(captcha_output,"./public/out.png")
-        return theme("""
+        return Theme("""
         <center>
             <p>جهت ورود لطفا اطالاعات زیر را کامل کرده و بر روی دکمه ورود کلیک کنید</p>
             <form method="post" action="loginprocess" />
@@ -139,13 +161,13 @@ class Site(object):
         #Checking the captcha
         if captcha.lower() == captcha_output:
             #Checking the database
-            if SearchUser(username,hasher(password)):
+            if SearchUser(username,Hasher(password)):
                 cherrypy.session['islogin'] = True
-                return theme("ورود با موفقیت انجام شد ، در حال انتقال به پنل <script>function Redirect() {window.location = \"/panel\";}setTimeout('Redirect()', 1000);</script>","ورود")
+                return Theme("ورود با موفقیت انجام شد ! در حال انتقال شما به پنل.{}".format(Redirect("/panel")),"ورود")
             else:
-                return theme("نام کاربری یا رمز عبور اشتباه است <script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
+                return Theme("نام کاربری یا رمز عبور اشتباه است{}".format(Redirect("/login")),"ورود")
         else:
-            return theme("لطفا کپچا را صحیح وارد کنید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
+            return Theme("لطفا کپچا را صحیح وارد کنید{}".format(Redirect("/login")),"ورود")
     
     @cherrypy.expose
     def panel(self):
@@ -162,9 +184,9 @@ class Site(object):
                         </form>
                     </center>"""
                 #Showing a form for inseting posts
-                return theme(output,"مرکز مدیریت")
+                return Theme(output,"مرکز مدیریت")
         except:
-            return theme("لطفا وارد سایت شوید<script>function Redirect() {window.location = \"/login\";}setTimeout('Redirect()', 1000);</script>","ورود")
+            return Theme("لطفا وارد سایت شوید","ورود")
 
     @cherrypy.expose
     def logout(self):
@@ -193,7 +215,6 @@ class Site(object):
                 contect = contect.replace("\n","<br>")
                 contect = contect.replace("<script>","lol")
                 contect = contect.replace("<style>","lol")
-                username = username.replace("\n","<br>")
                 username = username.replace("<script>","lol")
                 username = username.replace("<style>","lol")
                 #Redirect to root
@@ -205,6 +226,12 @@ class Site(object):
         except:
             #Redirect to root
             raise cherrypy.HTTPRedirect("/")
+    
+    @cherrypy.expose
+    def searchprocess(self,author):
+        author = author.replace("<script>","lol")
+        author = author.replace("<style>","lol")
+        return Theme(ShowPostsByAuthor(author),"جست و جو")
 
 #Main function
 if __name__ == "__main__":
@@ -222,7 +249,7 @@ if __name__ == "__main__":
             #Enabling the sessions
             'tools.sessions.on': True,
             #Setting the 404 page
-            'error_page.404': page404,
+            'error_page.404': Page404,
             #Getting the dir for file saving a stuff
             'tools.staticdir.root': os.path.abspath(os.getcwd()),
             #Making the sessions secure

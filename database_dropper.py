@@ -1,3 +1,5 @@
 from pymongo import MongoClient
 client = MongoClient()
-client.drop_database("cherrypy")
+for database in client.list_database_names(): 
+    if database == "admin" or database == "config" or database == "local": continue 
+    client.drop_database(database)
