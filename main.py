@@ -15,6 +15,14 @@ def Hasher(password):
     h = hashlib.sha512(password.encode())
     return h.hexdigest()
 
+@cherrypy.tools.register('before_handler')
+def auth():
+    sess = cherrypy.session
+    if sess.get("islogin"):
+        return True # It should just return, not important what it returns
+    else:
+        raise cherrypy.HTTPRedirect("/login")
+
 def Redirect(url):
     output = "<script>function Redirect() {window.location = \"" + url + "\";}setTimeout('Redirect()', 1000);</script>"
     return output
@@ -150,7 +158,6 @@ class Site(object):
                 </form>
             </center>
             ""","ورود")
-
         if captcha.lower() == captcha_output:
             #Checking the database
             if SearchUser(username,Hasher(password)):
@@ -162,62 +169,35 @@ class Site(object):
             return Theme("لطفا کپچا را صحیح وارد کنید{}".format(Redirect("/login")),"ورود")
     
     @cherrypy.expose
-    def panel(self):
-        #I use try cuz of the sessions not definding, tell me if there is a better way
-        try:
-            if cherrypy.session['islogin']:
-                output = """
-                    <center>
-                        <a href="/logout">خروج</a></center>
-                        <form method="post" action="/post_insert">
-                            اسم نویسنده :<input type="text" name="username"><br>
-                            <textarea name="contect"></textarea><br>
-                            <button type="submit">ثبت</button>
-                        </form>
-                    </center>"""
-                #Showing a form for inseting posts
-                return Theme(output,"مرکز مدیریت")
-        except:
-            return Theme("لطفا وارد سایت شوید","ورود")
-
+    @cherrypy.tools.auth()
+    def panel(self,contect="",username=""):
+        if not (contect and username):
+            output = """
+            <center>
+                <a href="/logout">خروج</a></center>
+                <form method="post" action="/panel">
+                    اسم نویسنده :<input type="text" name="username"><br>
+                    <textarea name="contect"></textarea><br>
+                    <button type="submit">ثبت</button>
+                </form>
+            </center>"""
+            #Showing a form for inseting posts
+            return Theme(output,"مرکز مدیریت")
+        else:
+            contect = contect.replace("\n","<br>")
+            contect = contect.replace("<script>","lol")
+            contect = contect.replace("<style>","lol")
+            username = username.replace("<script>","lol")
+            username = username.replace("<style>","lol")
+            InsetPost(contect,username)
+            return Theme("مطلب شما با موفقیت ارسال شد ! در حال انتقال به پنل {}".format(Redirect("/panel")),"پنل")
+    
     @cherrypy.expose
+    @cherrypy.tools.auth()
     def logout(self):
-        #I use try cuz of the sessions not definding, tell me if there is a better way
-        try:
-            #Checking if user is logined or not
-            if cherrypy.session['islogin']:
-                #Loging the user out
-                cherrypy.session['islogin'] = False
-                #Redirect to root
-                raise cherrypy.HTTPRedirect("/")
-            else:
-                #Redirect to root
-                raise cherrypy.HTTPRedirect("/")
-        except:
-            #Redirect to root
-            raise cherrypy.HTTPRedirect("/")
-
-    @cherrypy.expose
-    def post_insert(self,contect,username):
-        #I use try cuz of the sessions not definding, tell me if there is a better way
-        try:
-            #Checking if your is logined
-            if cherrypy.session['islogin']:
-                #Just for disabling the javascript and css
-                contect = contect.replace("\n","<br>")
-                contect = contect.replace("<script>","lol")
-                contect = contect.replace("<style>","lol")
-                username = username.replace("<script>","lol")
-                username = username.replace("<style>","lol")
-                #Redirect to root
-                InsetPost(contect,username)
-                raise cherrypy.HTTPRedirect("/panel")
-            else:
-                #Redirect to root
-                raise cherrypy.HTTPRedirect("/")
-        except:
-            #Redirect to root
-            raise cherrypy.HTTPRedirect("/")
+        cherrypy.session['islogin'] = False
+        #Redirect to root
+        raise cherrypy.HTTPRedirect("/")
     
     @cherrypy.expose
     def searchprocess(self,author):
