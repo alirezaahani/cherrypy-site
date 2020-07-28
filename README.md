@@ -3,10 +3,11 @@ A simple site with cherrypy and mongodb!
 ## ScreenShots
 Note: Screenshots are old!
 ![login](/screenshots/login.png)
-![home](/screenshots/home.png)
+![home](/screenshots/index.png)
 ![panel](/screenshots/panel.png)
 ![signin](/screenshots/signin.png)
 ![404](/screenshots/404.png)
+![search](/screenshots/search.png)
 ## Run on localhost
 First of all,you need to install cherrypy,pymongo and captcha with pip:  
 ```
