@@ -8,6 +8,7 @@ from pymongo import MongoClient
 from captcha.image import ImageCaptcha
 
 captcha_output = ""
+
 #Making a strong hash using sha512(It's little bit slow it think)
 def Hasher(password):
     password = str(password)
@@ -101,64 +102,55 @@ class Site(object):
         return html
 
     @cherrypy.expose
-    def signin(self):
-        #Making captcha and putting it in public/out.png
-        global captcha_output
-        captcha_output = ''.join(random.sample(string.hexdigits, 4)).lower()
-        image = ImageCaptcha()
-        image.write(captcha_output,"./public/out.png")
-        return Theme("""
-        <center>
-            <p>پسورد باید حداقل ۶ حرف باشد</p>
-            <p>جهت جلوگیری از مشکلات در ورود لطفا از حروف انگلیسی برای نام کاربری خود استفاده کنید</p>
-            <form method="post" action="signinprocess" />
-                نام کاربری:<input type="text" value="" name="username" /><br>
-                رمز ورود:<input type="password" value="" name="password" /><br>
-                کپجا : <input type="text" name="captcha"><br>
-                <button type="submit">ثبت نام</button><br>
-    		    <img src="static/out.png">
-            </form>
-        </center>""","ثبت نام")
-
-    @cherrypy.expose
-    def signinprocess(self,password,username,captcha):
-        #Checking for empty input
-        if len(username) < 0 or len(password) < 0 or len(captcha) < 0:
-            return Theme("لطفا تمامی فرم هارا پرکنید{}".format(Redirect("/signin")),"ورود")
-        else:
-            #Checking the captcha
-            if captcha.lower() == captcha_output:
-                #Inserting the user
-                if InsertUser(username,Hasher(password)):
-                    return Theme("ثبت نام با موفقیت انجام شد !{}".format(Redirect("/login")),"ورود")
-                else:
-                    return Theme("نام کاربری تکراریست.{}".format(Redirect("/signin")),"ورود")
+    def signin(self, username="", password="",captcha=""):
+        if not(username and password):
+            #Making captcha and putting it in public/out.png
+            global captcha_output
+            captcha_output = ''.join(random.sample(string.hexdigits, 4)).lower()
+            image = ImageCaptcha()
+            image.write(captcha_output,"./public/out.png")
+            return Theme("""
+            <center>
+                <p>پسورد باید حداقل ۶ حرف باشد</p>
+                <p>جهت جلوگیری از مشکلات در ورود لطفا از حروف انگلیسی برای نام کاربری خود استفاده کنید</p>
+                <form method="post" action="/signin" />
+                    نام کاربری:<input type="text" value="" name="username" /><br>
+                    رمز ورود:<input type="password" value="" name="password" /><br>
+                    کپجا : <input type="text" name="captcha"><br>
+                    <button type="submit">ثبت نام</button><br>
+                    <img src="static/out.png">
+                </form>
+            </center>""","ثبت نام")
+        if captcha.lower() == captcha_output:
+            #Inserting the user
+            if InsertUser(username,Hasher(password)):
+                return Theme("ثبت نام با موفقیت انجام شد !{}".format(Redirect("/login")),"ورود")
             else:
-                return Theme("لطفا کپچا را درست وارد کنید.{}".format(Redirect("/signin")),"ورود")
-    
-    @cherrypy.expose
-    def login(self):
-        #Making a captcha and saving it in public/out.png
-        global captcha_output
-        captcha_output = ''.join(random.sample(string.hexdigits, 4)).lower()
-        image = ImageCaptcha()
-        image.write(captcha_output,"./public/out.png")
-        return Theme("""
-        <center>
-            <p>جهت ورود لطفا اطالاعات زیر را کامل کرده و بر روی دکمه ورود کلیک کنید</p>
-            <form method="post" action="loginprocess" />
-                نام کاربری:<input type="text" value="" name="username" /><br>
-                رمز ورود:<input type="password" value="" name="password" /><br>
-                کپجا : <input type="text" name="captcha"><br>
-                <button type="submit">ورود</button><br>
-    	        <img src="static/out.png">
-            </form>
-        </center>
-        ""","ورود")
+                return Theme("نام کاربری تکراریست.{}".format(Redirect("/signin")),"ورود")
+        else:
+            return Theme("لطفا کپچا را درست وارد کنید.{}".format(Redirect("/signin")),"ورود")
 
     @cherrypy.expose
-    def loginprocess(self,username,password,captcha):
-        #Checking the captcha
+    def login(self, username="", password="",captcha=""):
+        if not(username and password):
+            #Making a captcha and saving it in public/out.png
+            global captcha_output
+            captcha_output = ''.join(random.sample(string.hexdigits, 4)).lower()
+            image = ImageCaptcha()
+            image.write(captcha_output,"./public/out.png")
+            return Theme("""
+            <center>
+                <p>جهت ورود لطفا اطالاعات زیر را کامل کرده و بر روی دکمه ورود کلیک کنید</p>
+                <form method="post" action="/login" />
+                    نام کاربری:<input type="text" value="" name="username" /><br>
+                    رمز ورود:<input type="password" value="" name="password" /><br>
+                    کپجا : <input type="text" name="captcha"><br>
+                    <button type="submit">ورود</button><br>
+                    <img src="static/out.png">
+                </form>
+            </center>
+            ""","ورود")
+
         if captcha.lower() == captcha_output:
             #Checking the database
             if SearchUser(username,Hasher(password)):
