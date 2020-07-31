@@ -4,6 +4,7 @@ import hashlib
 import string
 import time
 import random
+import re
 from pymongo import MongoClient
 from captcha.image import ImageCaptcha
 
@@ -51,11 +52,17 @@ def Page404(status, message, traceback, version):
 
 def ShowPostsByAuthor(author):
     output = ""
-    posts_in_list = list(posts.find({'username':author}))
+    counter = 0
+    posts_in_list = list(posts.find())
     posts_in_list.reverse()
-    output += str(len(posts_in_list)) + " پست توسط " + author + " منتشر شده است " + "<hr>"
     for post in posts_in_list:
-        output += "توسط " + post['username'] + " در "  + post['date'] +": <br>" + post['content'] + "<hr>"
+        if re.search(author,post['username']):
+            if counter == 0:
+                output += str(len(posts_in_list)) + " پست از طریق عبارت باقاعده  : " + author + " پیدا شد " + "<hr>"
+            output += "توسط " + post['username'] + " در "  + post['date'] +": <br>" + post['content'] + "<hr>"
+            counter += 1
+        else:
+            output = "هیچ پستی توسط عبارت با قاعده : " + author + "پیدا نشد ."
     return output
 
 def SearchDupUser(username):
@@ -63,7 +70,7 @@ def SearchDupUser(username):
     if output is None:
         return True
     else:
-        return False
+        return True
 
 def SearchUser(username,password):
     output = users.find_one({'username':username,'password':password})
@@ -102,6 +109,7 @@ class Site(object):
             <form method="get" action="searchprocess">
                 نام نویسنده : <input name="author" />
                 <button>جست و جو</button>
+                <p>جست و جو از طریق عبارات باقاعده و در نویسنده ها جست و جو انجام میشود</p>
             </form>
         </center>
         {}
