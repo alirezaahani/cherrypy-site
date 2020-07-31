@@ -24,6 +24,14 @@ def auth():
     else:
         raise cherrypy.HTTPRedirect("/login")
 
+@cherrypy.tools.register('before_handler')
+def admin():
+    sess = cherrypy.session
+    if sess.get("isadmin"):
+        return True # It should just return, not important what it returns
+    else:
+        raise cherrypy.HTTPRedirect("/login")
+
 def Redirect(url):
     output = "<script>function Redirect() {window.location = \"" + url + "\";}setTimeout('Redirect()', 1000);</script>"
     return output
@@ -56,13 +64,10 @@ def ShowPostsByAuthor(author):
     posts_in_list = list(posts.find())
     posts_in_list.reverse()
     for post in posts_in_list:
-        if re.search(author,post['username']):
-            if counter == 0:
-                output += str(len(posts_in_list)) + " پست از طریق عبارت باقاعده  : " + author + " پیدا شد " + "<hr>"
+        if author in post['username']:
             output += "توسط " + post['username'] + " در "  + post['date'] +": <br>" + post['content'] + "<hr>"
             counter += 1
-        else:
-            output = "هیچ پستی توسط عبارت با قاعده : " + author + "پیدا نشد ."
+    output = str(counter) + " پست توسط : " + author + " پیدا شد " + "<hr>" + output
     return output
 
 def SearchDupUser(username):
@@ -76,11 +81,13 @@ def SearchUser(username,password):
     output = users.find_one({'username':username,'password':password})
     if output is None:
         return False
+    if output['group'] == 'admin':
+        return 2
     else:
         return True
 
 def InsertUser(username,password):
-    data = {'username':username,'password':password}
+    data = {'username':username,'password':password,'group':'normal'}
     if SearchDupUser(username):
         users.insert_one(data)
         return True
@@ -109,7 +116,6 @@ class Site(object):
             <form method="get" action="searchprocess">
                 نام نویسنده : <input name="author" />
                 <button>جست و جو</button>
-                <p>جست و جو از طریق عبارات باقاعده و در نویسنده ها جست و جو انجام میشود</p>
             </form>
         </center>
         {}
@@ -169,12 +175,21 @@ class Site(object):
         if captcha.lower() == captcha_output:
             #Checking the database
             if SearchUser(username,Hasher(password)):
-                cherrypy.session['islogin'] = True
-                return Theme("ورود با موفقیت انجام شد ! در حال انتقال شما به پنل.{}".format(Redirect("/panel")),"ورود")
+                if SearchUser(username,Hasher(password)) == 2:
+                    cherrypy.session['isadmin'] = True
+                    raise cherrypy.HTTPRedirect("/admin")
+                else:
+                    cherrypy.session['islogin'] = True
+                    return Theme("ورود با موفقیت انجام شد ! در حال انتقال شما به پنل.{}".format(Redirect("/panel")),"ورود")
             else:
                 return Theme("نام کاربری یا رمز عبور اشتباه است{}".format(Redirect("/login")),"ورود")
         else:
             return Theme("لطفا کپچا را صحیح وارد کنید{}".format(Redirect("/login")),"ورود")
+    
+    @cherrypy.expose
+    @cherrypy.tools.admin()
+    def admin(self):
+        return "Hello admin!"
     
     @cherrypy.expose
     @cherrypy.tools.auth()
