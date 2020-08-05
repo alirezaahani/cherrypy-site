@@ -106,11 +106,25 @@ def ShowAllPosts():
         output += "توسط " + post['username'] + " در "  + post['date'] +": <br>" + post['content'] + "<hr>"
     return output
 
+def ShowLimitedPost(limit):
+    output = ""
+    counter = 0
+    posts_in_list = list(posts.find())
+    posts_in_list.reverse()
+    for post in posts_in_list:
+        if counter <= limit:
+            output += "توسط " + post['username'] + " در "  + post['date'] +": <br>" + post['content'] + "<hr>"
+            counter += 1
+    return output    
+
 class Site(object):
     @cherrypy.expose
     def index(self):
         html = Theme(
-        """<center>برای <a href="/login">ورود</a> کلیک کنید<br>برای <a href="/signin">ثبت نام</a> کلیک کنید<br></center>
+        """<center>
+        برای <a href="/login">ورود</a> کلیک کنید<br>برای <a href="/signin">ثبت نام</a> کلیک کنید<br>
+        برای دیدن تمامی پست ها <a href="/allposts">کلیک</a> کنید
+        </center>
         <br>
         <center>
             <form method="get" action="searchprocess">
@@ -118,10 +132,15 @@ class Site(object):
                 <button>جست و جو</button>
             </form>
         </center>
+        <br>
         {}
-        """.format(ShowAllPosts())
+        """.format(ShowLimitedPost(4))
         ,"صفحه اصلی")
         return html
+
+    @cherrypy.expose
+    def allposts(self):
+        return Theme(ShowAllPosts(),"مطالب")
 
     @cherrypy.expose
     def signin(self, username="", password="",captcha=""):
