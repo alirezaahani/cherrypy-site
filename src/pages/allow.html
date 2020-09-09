@@ -1,0 +1,46 @@
+<html>
+    <head>
+        <title>Alireza's weblog !</title>
+        <link rel="stylesheet" href="../static/style.css">
+        <script>
+            function show_alloweds() {
+                var users = document.getElementsByClassName('allows');
+                var button = document.getElementsByClassName('show_button');
+
+                if (users[0].style.display == "none") {
+                    users[0].style.display = "block";
+                    button[0].innerHTML = "Hide users";
+                }
+                else {
+                    users[0].style.display = "none";
+                    button[0].innerHTML = "Show users";
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <div id="wrp">
+            <div id="menu">
+                {{#menu}}
+                <a href="{{link}}">{{text}}</a>
+                {{/menu}}
+            </div>
+            <div id="login">
+                <form action="/allow" method="post">
+                    You can allow new users to login and write posts! <br>
+                    Username : <input name="username" /> <br>
+                    <button type="submit">Submit</button>
+                </form>
+                {{#show_message}}
+                <p>{{message}}</p>
+                {{/show_message}} <br>
+                <button onclick="show_alloweds();" class='show_button'>Show users</button> <br>
+                <div class='allows' style="display: none;">
+                    {{#allowes}}
+                    <p>{{username}}</p>
+                    {{/allowes}}
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

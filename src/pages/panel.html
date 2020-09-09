@@ -1,0 +1,26 @@
+<html>
+    <head>
+        <title>Alireza's weblog !</title>
+        <link rel="stylesheet" href="../static/style.css">
+    </head>
+    <body>
+        <div id="wrp">
+            <div id="menu">
+                {{#menu}}
+                <a href="{{link}}">{{text}}</a>
+                {{/menu}}
+            </div>
+            <div id="login">
+                <form action="/panel" method="post">
+                    Post submit form <br>
+                    Title : <input name="title" /> <br>
+                    Post : <textarea name="content"></textarea> <br>
+                    <button type="submit">Submit</button>
+                </form>
+                {{#show_message}}
+                <p>{{message}}</p>
+                {{/show_message}}
+            </div>
+        </div>
+    </body>
+</html>

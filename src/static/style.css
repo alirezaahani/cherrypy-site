@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
+
+body {
+    background-color: lightgray;
+    font-family: 'Open Sans', sans-serif;
+    direction: ltr;
+}
+pre {
+    color: #FFFFFF;
+    background: #000000;
+    padding: 24px;
+    white-space: pre-wrap;
+}
+a {
+      text-decoration: none;
+      color:black;
+}
+#wrp {
+    background-color: white;
+    margin: 10px;
+    padding: 10px;
+    box-shadow: 0 1px 6px 0 rgba(32, 33, 36, .78);
+}
+#menu {
+    background-color: #e8e8e8;
+    margin: 10px;
+    padding: 10px;
+    box-shadow: 0 1px 6px 0 rgba(32, 33, 36, .78);
+    text-align: center;
+}
+#menu a{
+    background-color: black;
+    margin: 5px;
+    color: white; 
+    padding: 5px;
+    box-shadow: 0 1px 6px 0 rgba(32, 33, 36, .78);
+}
+#posts .post {
+    background-color: #e8e8e8;
+    margin: 10px;
+    padding: 10px;
+    box-shadow: 0 1px 6px 0 rgba(32, 33, 36, .78);
+}
+#login {
+    margin: 10px;
+    margin-top: 20px;
+    text-align: center;
+    padding: 10px;
+    box-shadow: 0 1px 6px 0 rgba(32, 33, 36, .78);
+}
+#login input {
+      margin: 5px;
+}

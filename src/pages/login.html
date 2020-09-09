@@ -1,0 +1,30 @@
+<html>
+    <head>
+        <title>Alireza's weblog !</title>
+        <link rel="stylesheet" href="../static/style.css">
+    </head>
+    <body>
+        <div id="wrp">
+            <div id="menu">
+                {{#menu}}
+                <a href="{{link}}">{{text}}</a>
+                {{/menu}}
+            </div>
+            <div id="login">
+                {{#form}}
+                <form action="/login" method="post">
+                    Login form <br>
+                    Username : <input name="username" /> <br>
+                    Password : <input type="password" name="password" /> <br>
+                    Captcha : <input name="captcha" /> <br>
+                    <img src="data:image/png;base64, {{base64}}"> <br>
+                    <button type="submit">Login</button>
+                </form>
+                {{/form}}
+                {{#show_message}}
+                <p>{{message}}</p>
+                {{/show_message}}
+            </div>
+        </div>
+    </body>
+</html>
