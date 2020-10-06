@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <title>Alireza's weblog !</title>
+        <link rel="stylesheet" href="../static/style.css">
+    </head>
+    <body>
+        <div id="wrp">
+            <div id="menu">
+                {{#menu}}
+                <a href="{{link}}">{{text}}</a>
+                {{/menu}}
+            </div>
+            <div id="posts">
+                {{#show_message}}
+                <p>{{message}}</p>
+                {{/show_message}}
+                {{#posts}}
+                <div class='post'>
+                    <h2>{{title}}</h2>
+                    By : {{user}}
+                    <br>
+                    {{{content}}}
+                </div>
+                {{/posts}}
+            </div>
+        </div>
+    </body>
+</html>
