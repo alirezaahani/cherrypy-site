@@ -27,6 +27,9 @@ def gen_captcha():
     base = base64.b64encode(byte)
     return (captcha_output,base.decode("utf-8"))
 
+
+
+
 def RenderMenus():
     menus = []
     with sqlite3.connect(DB_NAME) as con:
@@ -36,26 +39,34 @@ def RenderMenus():
             menus.append({'text':row[1],'link':row[2]})
         return menus
 
-def CheckUser(password,username):
-    with sqlite3.connect(DB_NAME) as con:
-        cur = con.cursor()
-        cur.execute('SELECT * FROM users WHERE password = ? AND username = ?',(password,username,))
-        data = cur.fetchall()
-        if data:
-            return data[0][3]
-        else:
-            return False
-
-def RenderPosts(limit = -1):
+def RenderPosts(limit = -1,post_id = -1):
     posts = []
     with sqlite3.connect(DB_NAME) as con:
         cur = con.cursor()
-        if limit > 0:
+        if (limit > 0.1) and (post_id > 0):
+            try:
+                cur.execute('SELECT * FROM posts WHERE id = ? LIMIT ?',(post_id,limit,))
+            except:
+                return False
+        
+        elif (limit == 0.1) and (post_id > 0):
+            try:
+                cur.execute('SELECT * FROM posts WHERE id = ?',(post_id,))
+            except:
+                return False
+        
+        elif limit == 0.1:
+            cur.execute('SELECT * FROM posts')
+        
+        elif limit > 0:
             cur.execute('SELECT * FROM posts LIMIT ?',(limit,))
+        
         else:
             cur.execute('SELECT * FROM posts')
+        
         for row in cur.fetchall():
-            posts.append({'user':row[1],'title':row[3],'content':row[2],'date':row[4]})
+            posts.append({'user':row[1],'title':row[3],'content':row[2],'date':row[4],'post_id':row[0]})
+    
     posts.reverse()
     return posts
 
@@ -70,6 +81,31 @@ def RenderAllows(limit = -1):
         for row in cur.fetchall():
             users.append({'username':row[1]})
     return users
+
+
+
+
+def CheckUser(password,username):
+    with sqlite3.connect(DB_NAME) as con:
+        cur = con.cursor()
+        cur.execute('SELECT * FROM users WHERE password = ? AND username = ?',(password,username,))
+        data = cur.fetchall()
+        if data:
+            return data[0][3]
+        else:
+            return False
+
+def IsAllowed(username):
+    with sqlite3.connect(DB_NAME) as con:
+        cur = con.cursor()
+        cur.execute('SELECT * FROM allow WHERE username = ?',(username,))
+        if cur.fetchall():
+            return True
+        else:
+            return False
+
+
+
 
 def InsertPost(title,nickname,content):
     with sqlite3.connect(DB_NAME) as con:
@@ -90,15 +126,6 @@ def InsertUser(username,password,nickname):
         except sqlite3.IntegrityError:
             return False
 
-def IsAllowed(username):
-    with sqlite3.connect(DB_NAME) as con:
-        cur = con.cursor()
-        cur.execute('SELECT * FROM allow WHERE username = ?',(username,))
-        if cur.fetchall():
-            return True
-        else:
-            return False
-
 def AllowUser(username):
     with sqlite3.connect(DB_NAME) as con:
         cur = con.cursor()
@@ -108,6 +135,8 @@ def AllowUser(username):
         except sqlite3.IntegrityError:
             return False
 
+
+
 @cherrypy.tools.register('before_handler')
 def auth():
     if cherrypy.session.get("islogin"):
@@ -115,19 +144,36 @@ def auth():
     else:
         raise cherrypy.HTTPRedirect("/login")
 
+
+
 class App(object):
     @cherrypy.expose
     def index(self):
         args = {
             'menu' : RenderMenus(),
-            'posts' : RenderPosts()
+            'posts' : RenderPosts(10)
         }
         with open('pages/index.html') as f:
             return chevron.render(f,args)
     
     @cherrypy.expose
-    def login(self,password = "",username = "",captcha = ""):
+    def archive(self,post_id=-1):
+        post_id = int(post_id)
+        args = {
+            'menu' : RenderMenus()
+        }
+        response = RenderPosts(0.1,post_id)
+        if response:
+            args['posts'] = response
+        else:
+            args['show_message'] = True
+            args['message'] = 'No posts found :('
+        
+        with open('pages/archive.html') as f:
+            return chevron.render(f,args)
 
+    @cherrypy.expose
+    def login(self,password = "",username = "",captcha = ""):
         if cherrypy.session.get("islogin"):
             raise cherrypy.HTTPRedirect('/panel')
 
